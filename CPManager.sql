@@ -1,0 +1,36 @@
+CREATE DATABASE CPManager;
+GO
+
+USE CPManager;
+GO
+
+CREATE TABLE Problems (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Title NVARCHAR(255) NOT NULL,
+    Content NVARCHAR(MAX) NOT NULL,
+    FolderPath NVARCHAR(500) NULL,
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+GO
+
+CREATE TABLE Testcases (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    ProblemId INT NOT NULL,
+    InputPath NVARCHAR(500) NOT NULL,
+    OutputPath NVARCHAR(500) NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (ProblemId) REFERENCES Problems(Id) ON DELETE CASCADE
+);
+GO
+
+CREATE TABLE Submissions (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    ProblemId INT NOT NULL,
+    Language NVARCHAR(50) NOT NULL,
+    SourcePath NVARCHAR(500) NOT NULL,
+    Status NVARCHAR(50) NOT NULL, -- AC, WA, TLE, CE, etc.
+    ExecutionTime INT NOT NULL, -- in milliseconds
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (ProblemId) REFERENCES Problems(Id) ON DELETE CASCADE
+);
+GO
