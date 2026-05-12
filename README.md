@@ -27,27 +27,8 @@
 ## 🚀 Hướng dẫn cài đặt và Chạy dự án
 
 ### Bước 1: Khởi tạo Database (SQL Server)
-Mở **SQL Server Management Studio (SSMS)** và thực thi đoạn script sau để tạo cơ sở dữ liệu `CPManager` và bảng `Problems`:
+Mở **SQL Server Management Studio (SSMS)** và chạy lần lượt file `CPManager.sql` và `UpdateDB.sql` để tạo cơ sở dữ liệu `CPManager`.
 
-```sql
-CREATE DATABASE CPManager;
-GO
-
-USE CPManager;
-GO
-
-CREATE TABLE Problems (
-    Id INT IDENTITY(1,1) PRIMARY KEY,
-    Title NVARCHAR(255) NOT NULL,
-    Content NVARCHAR(MAX) NOT NULL,
-    FolderPath NVARCHAR(255),
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    GeneratorCode NVARCHAR(MAX) NULL,
-    CheckerCode NVARCHAR(MAX) NULL,
-    SolutionCode NVARCHAR(MAX) NULL
-);
-GO
-```
 *(Nếu bạn đã chạy `CPManager.sql` và `UpdateDB.sql` trước đó thì có thể bỏ qua bước này).*
 
 ### Bước 2: Cấu hình Kết nối Cơ sở dữ liệu
