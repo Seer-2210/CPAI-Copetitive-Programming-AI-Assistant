@@ -189,94 +189,105 @@ public class TestcaseService {
                 } catch (Exception e) { return f1.getName().compareTo(f2.getName()); }
             });
 
+            int numThreads = Runtime.getRuntime().availableProcessors();
+            java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(numThreads);
+            java.util.List<java.util.concurrent.Callable<JudgeResult>> tasks = new java.util.ArrayList<>();
+
             for (File inFile : inFiles) {
-                String baseName = inFile.getName().replace(".in", "");
-                File outFile = testcasesDir.resolve(baseName + ".out").toFile();
-                if (!outFile.exists()) {
-                    results.add(new JudgeResult(baseName, "Skipped (No .out)", 0));
-                    continue;
-                }
+                tasks.add(() -> {
+                    String baseName = inFile.getName().replace(".in", "");
+                    File outFile = testcasesDir.resolve(baseName + ".out").toFile();
+                    if (!outFile.exists()) {
+                        return new JudgeResult(baseName, "Skipped (No .out)", 0);
+                    }
 
-                File userOutFile = problemDir.resolve("user_" + baseName + ".out").toFile();
+                    File userOutFile = problemDir.resolve("user_" + baseName + ".out").toFile();
 
-                ProcessBuilder runPb = new ProcessBuilder(problemDir.resolve(exeName).toAbsolutePath().toString());
-                runPb.directory(problemDir.toFile());
-                runPb.redirectInput(inFile);
-                runPb.redirectOutput(userOutFile);
-                runPb.redirectError(ProcessBuilder.Redirect.INHERIT);
+                    ProcessBuilder runPb = new ProcessBuilder(problemDir.resolve(exeName).toAbsolutePath().toString());
+                    runPb.directory(problemDir.toFile());
+                    runPb.redirectInput(inFile);
+                    runPb.redirectOutput(userOutFile);
+                    runPb.redirectError(ProcessBuilder.Redirect.INHERIT);
 
-                long startTime = System.currentTimeMillis();
-                Process runProcess = runPb.start();
-                
-                // Watchdog thread to monitor Output Limit Exceeded (OLE)
-                long maxOutputSize = 64 * 1024 * 1024; // 64MB limit
-                boolean[] isOle = {false};
-                Thread watchdog = new Thread(() -> {
-                    while (runProcess.isAlive()) {
-                        if (userOutFile.exists() && userOutFile.length() > maxOutputSize) {
-                            isOle[0] = true;
-                            runProcess.destroyForcibly();
-                            break;
+                    long startTime = System.currentTimeMillis();
+                    Process runProcess = runPb.start();
+                    
+                    // Watchdog thread to monitor Output Limit Exceeded (OLE)
+                    long maxOutputSize = 64 * 1024 * 1024; // 64MB limit
+                    boolean[] isOle = {false};
+                    Thread watchdog = new Thread(() -> {
+                        while (runProcess.isAlive()) {
+                            if (userOutFile.exists() && userOutFile.length() > maxOutputSize) {
+                                isOle[0] = true;
+                                runProcess.destroyForcibly();
+                                break;
+                            }
+                            try {
+                                Thread.sleep(50);
+                            } catch (InterruptedException e) {
+                                break;
+                            }
                         }
-                        try {
-                            Thread.sleep(50);
-                        } catch (InterruptedException e) {
-                            break;
+                    });
+                    watchdog.start();
+
+                    boolean finished = runProcess.waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
+                    watchdog.interrupt(); // Stop watchdog if process finished early
+                    
+                    long endTime = System.currentTimeMillis();
+                    long timeTaken = endTime - startTime;
+
+                    if (isOle[0]) {
+                        return new JudgeResult(baseName, "OLE (Output Limit Exceeded)", timeTaken);
+                    }
+
+                    if (!finished) {
+                        runProcess.destroyForcibly();
+                        return new JudgeResult(baseName, "TLE (Time Limit Exceeded)", timeTaken);
+                    }
+
+                    if (runProcess.exitValue() != 0) {
+                        return new JudgeResult(baseName, "RTE (Runtime Error)", timeTaken);
+                    }
+
+                    // So sánh output hoặc dùng checker
+                    if (useChecker) {
+                        // checker.exe <input_file> <expected_out_file> <user_out_file>
+                        ProcessBuilder checkerRunPb = new ProcessBuilder(problemDir.resolve(checkerExeName).toAbsolutePath().toString(), 
+                            inFile.getAbsolutePath(), outFile.getAbsolutePath(), userOutFile.getAbsolutePath());
+                        checkerRunPb.directory(problemDir.toFile());
+                        Process checkerProc = checkerRunPb.start();
+                        boolean checkerFinished = checkerProc.waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
+                        
+                        if (!checkerFinished) {
+                            checkerProc.destroyForcibly();
+                            return new JudgeResult(baseName, "WA (Checker TLE)", timeTaken);
+                        } else if (checkerProc.exitValue() == 0) {
+                            return new JudgeResult(baseName, "AC (Accepted)", timeTaken);
+                        } else {
+                            return new JudgeResult(baseName, "WA (Wrong Answer)", timeTaken);
+                        }
+                    } else {
+                        // String matching mặc định
+                        String expected = Files.readString(outFile.toPath()).trim().replace("\r\n", "\n");
+                        String actual = Files.readString(userOutFile.toPath()).trim().replace("\r\n", "\n");
+
+                        if (expected.equals(actual)) {
+                            return new JudgeResult(baseName, "AC (Accepted)", timeTaken);
+                        } else {
+                            return new JudgeResult(baseName, "WA (Wrong Answer)", timeTaken);
                         }
                     }
                 });
-                watchdog.start();
+            }
 
-                boolean finished = runProcess.waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
-                watchdog.interrupt(); // Stop watchdog if process finished early
-                
-                long endTime = System.currentTimeMillis();
-                long timeTaken = endTime - startTime;
-
-                if (isOle[0]) {
-                    results.add(new JudgeResult(baseName, "OLE (Output Limit Exceeded)", timeTaken));
-                    continue;
+            try {
+                java.util.List<java.util.concurrent.Future<JudgeResult>> futures = executor.invokeAll(tasks);
+                for (java.util.concurrent.Future<JudgeResult> future : futures) {
+                    results.add(future.get());
                 }
-
-                if (!finished) {
-                    runProcess.destroyForcibly();
-                    results.add(new JudgeResult(baseName, "TLE (Time Limit Exceeded)", timeTaken));
-                    continue;
-                }
-
-                if (runProcess.exitValue() != 0) {
-                    results.add(new JudgeResult(baseName, "RTE (Runtime Error)", timeTaken));
-                    continue;
-                }
-
-                // So sánh output hoặc dùng checker
-                if (useChecker) {
-                    // checker.exe <input_file> <expected_out_file> <user_out_file>
-                    ProcessBuilder checkerRunPb = new ProcessBuilder(problemDir.resolve(checkerExeName).toAbsolutePath().toString(), 
-                        inFile.getAbsolutePath(), outFile.getAbsolutePath(), userOutFile.getAbsolutePath());
-                    checkerRunPb.directory(problemDir.toFile());
-                    Process checkerProc = checkerRunPb.start();
-                    boolean checkerFinished = checkerProc.waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
-                    
-                    if (!checkerFinished) {
-                        checkerProc.destroyForcibly();
-                        results.add(new JudgeResult(baseName, "WA (Checker TLE)", timeTaken));
-                    } else if (checkerProc.exitValue() == 0) {
-                        results.add(new JudgeResult(baseName, "AC (Accepted)", timeTaken));
-                    } else {
-                        results.add(new JudgeResult(baseName, "WA (Wrong Answer)", timeTaken));
-                    }
-                } else {
-                    // String matching mặc định
-                    String expected = Files.readString(outFile.toPath()).trim().replace("\r\n", "\n");
-                    String actual = Files.readString(userOutFile.toPath()).trim().replace("\r\n", "\n");
-
-                    if (expected.equals(actual)) {
-                        results.add(new JudgeResult(baseName, "AC (Accepted)", timeTaken));
-                    } else {
-                        results.add(new JudgeResult(baseName, "WA (Wrong Answer)", timeTaken));
-                    }
-                }
+            } finally {
+                executor.shutdown();
             }
 
         } catch (Exception e) {
