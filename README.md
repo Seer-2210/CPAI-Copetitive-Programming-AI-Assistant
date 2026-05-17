@@ -37,7 +37,8 @@ Ví dụ, bài toán ID `1` sẽ có các file nằm trong `/cp_workspace/proble
 ## 🚀 Hướng dẫn cài đặt và Chạy dự án
 
 ### Bước 1: Khởi tạo Database (SQL Server)
-Mở **SQL Server Management Studio (SSMS)** và chạy lần lượt file `CPManager.sql` và `UpdateDB.sql` để tạo cơ sở dữ liệu `CPManager`.
+Mở **SQL Server Management Studio (SSMS)** và chạy file `CPManagerBackUp.sql` để tạo cơ sở dữ liệu `CPManager` và backup database các bài ví dụ có sẵn
+Nếu không được, chạy lần lượt file `CPManager.sql` và `UpdateDB.sql` để tạo cơ sở dữ liệu `CPManager`.
 
 ### Bước 2: Cấu hình Kết nối Cơ sở dữ liệu
 Nếu SQL Server của bạn có đặt mật khẩu tài khoản `sa`, hãy mở file `src/main/java/cpai/services/DatabaseHelper.java` và sửa lại chuỗi kết nối (`DB_URL`, `USER`, `PASS`). Nếu bạn dùng Windows Authentication mặc định, mã nguồn đã được cấu hình sẵn.
