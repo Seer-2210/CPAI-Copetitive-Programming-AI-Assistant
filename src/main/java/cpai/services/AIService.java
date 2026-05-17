@@ -11,7 +11,7 @@ import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
 public class AIService {
-        private static final String API_KEY = "AIzaSyDCN-Jx33MOq81jed_f0A2efXhvnvMWGJI"; // Thay key của bạn vào đây
+        private static final String API_KEY = "ĐIỀN_KEY_VÀO_ĐÂY"; // Thay key của bạn vào đây
         private static final String API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key="
                         + API_KEY;
 
