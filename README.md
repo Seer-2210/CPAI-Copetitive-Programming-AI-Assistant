@@ -1,10 +1,10 @@
 # CPAI - Competitive Programming AI Assistant
 
-**CPAI** là một ứng dụng Java Swing hiện đại dành cho lập trình viên thi đấu (Competitive Programmers). Đây là một đồ án cuối kỳ, tích hợp sức mạnh của **Google Gemini Vision AI** để tự động đọc đề bài từ hình ảnh, sinh mã nguồn C++ và sở hữu một **hệ thống Judge đa luồng** (Multithreaded Judge System) mô phỏng lại các nền tảng như Codeforces.
+**CPAI** là một ứng dụng Java Swing hiện đại dành cho lập trình viên thi đấu (Competitive Programmers). Tích hợp **Google Gemini Vision AI** để đọc đề bài từ hình ảnh, sinh mã nguồn C++ và **hệ thống Judge đa luồng** (Multithreaded Judge System) mô phỏng lại các nền tảng như Codeforces.
 
 ## 🌟 Các tính năng nổi bật
 - **Quản lý bài toán (CRUD):** Thêm, sửa, xóa các bài toán. Dữ liệu được lưu trữ trong SQL Server.
-- **Tích hợp Gemini Vision AI:** Đọc đề bài trực tiếp từ ảnh chụp màn hình, tự động sửa lỗi chính tả và format lại đề bài.
+- **Tích hợp Gemini Vision AI:** Đọc đề bài trực tiếp từ ảnh chụp, tự động sửa lỗi chính tả và format lại đề bài.
 - **AI Auto Code Generation:** AI tự động sinh ra 3 loại mã nguồn C++:
   - `Generator Code`: Mã sinh dữ liệu test ngẫu nhiên (dùng `mt19937`).
   - `Checker Code`: Mã chấm điểm tự động (Custom Checker).

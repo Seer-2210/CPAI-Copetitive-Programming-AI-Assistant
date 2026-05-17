@@ -130,8 +130,9 @@ public class TestcasePanel extends JPanel {
             // Hiển thị tất cả file .in
             File[] files = dir.listFiles((d, name) -> name.endsWith(".in"));
             if (files != null) {
+                int index = 1;
                 for (File f : files) {
-                    tableModel.addRow(new Object[]{"-", f.getName(), "OK (" + f.length() + " bytes)"});
+                    tableModel.addRow(new Object[]{index++, f.getName(), "OK (" + f.length() + " bytes)"});
                 }
             }
         }

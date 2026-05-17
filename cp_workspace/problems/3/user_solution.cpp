@@ -44,10 +44,6 @@ ll get(ll id, ll l, ll r, ll u, ll v, ll x)
 }
 int main() {
     ios::sync_with_stdio(0); cin.tie(0); cout.tie(0);
-    #ifdef ONLINE_JUDGE
-        freopen("SECINT.INP", "r", stdin);
-        freopen("SECINT.OUT", "w", stdout);
-    #endif
     cin>>n>>k;
     rep(i, 1, n) cin>>a[i];
     build(1, 1, n);
